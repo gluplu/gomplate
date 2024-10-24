@@ -15,7 +15,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-// DefaultEndpoint is the DNS name for the default GCP compute instance metadata service.
+// DefaultAzureEndpoint is the DNS name for the default Azure compute instance metadata service.
 var DefaultAzureEndpoint = "http://169.254.169.254/metadata/instance/"
 var lbMetadataEndpoint = "http://169.254.169.254/metadata/loadbalancer?api-version=2021-02-01"
 
@@ -135,11 +135,7 @@ func (c *MetaClient) retrieveMetadata(lb string, tag string, ctx context.Context
 	}
 	result := string(body)
 	if url == lbMetadataEndpoint {
-		// lbPath := strings.Replace(lb, "/", ".", -1)
-		// lbInfo := gjson.Get(result, lbPath)
-		// return lbInfo.String(), nil
 		result = extractJsonValue(string(body), lb)
-
 	}
 
 	if tag != "" {
@@ -176,8 +172,13 @@ func extractTagValue(tag string, result string) string {
 	}
 	return result
 }
+
+// extractJsonValue extracts a json value formatted as 'a/b/c'
 func extractJsonValue(json string, path string) string {
 	lbPath := strings.Replace(path, "/", ".", -1)
 	value := gjson.Get(json, lbPath)
+	if !value.Exists() {
+		return ""
+	}
 	return value.String()
 }

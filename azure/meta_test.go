@@ -38,6 +38,7 @@ func Test_extractJsonValue(t *testing.T) {
 		want string
 	}{
 		{name: "external IP", args: args{json: `{"loadbalancer":{"publicIpAddresses":[{"frontendIpAddress":"20.55.51.220","privateIpAddress":"10.1.0.4"}],"inboundRules":[],"outboundRules":[]}}`, path: "loadbalancer/publicIpAddresses/0/frontendIpAddress"}, want: "20.55.51.220"},
+		{name: "non exisiting stuff", args: args{json: `{"loadbalancer":{"publicIpAddresses":[{"frontendIpAddress":"20.55.51.220","privateIpAddress":"10.1.0.4"}],"inboundRules":[],"outboundRules":[]}}`, path: "loadbalancer/publicIpAddresses/0/IpAddress"}, want: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
