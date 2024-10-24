@@ -12,12 +12,13 @@ import (
 	"time"
 
 	"github.com/hairyhenderson/gomplate/v4/env"
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/tidwall/gjson"
 )
 
 // DefaultAzureEndpoint is the DNS name for the default Azure compute instance metadata service.
 var DefaultAzureEndpoint = "http://169.254.169.254/metadata/instance/"
-var lbMetadataEndpoint = "http://169.254.169.254/metadata/loadbalancer?api-version=2021-02-01"
+var lbMetadataEndpoint = "http://169.254.169.254:80/metadata/loadbalancer?api-version=2021-02-01"
 
 var (
 	// co is a ClientOptions populated from the environment.
@@ -110,7 +111,16 @@ func (c *MetaClient) retrieveMetadata(lb string, tag string, ctx context.Context
 		if timeout == 0 {
 			timeout = 500 * time.Millisecond
 		}
-		c.client = &http.Client{Timeout: timeout}
+
+		retryClient := retryablehttp.NewClient()
+		retryClient.HTTPClient.Timeout = timeout
+		retryClient.RetryMax = 3
+		debug := env.Getenv("GOMPLATE_DEBUG")
+		if debug == "" {
+			retryClient.Logger = nil // disable logs
+		}
+
+		c.client = retryClient.StandardClient() // *http.Client
 	}
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
